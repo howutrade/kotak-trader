@@ -1,0 +1,277 @@
+/*
+This is a demo Trading System.
+
+Coded by Howutrade Software Solutions LLP
+https://howutrade.in
+support@howutrade.in
+*/
+
+_SECTION_BEGIN("CHART_OPTIONS");
+GfxSetBkMode(0);
+SetChartOptions(0, chartShowArrows | chartShowDates);
+SetChartBkColor(colorBlack);
+SetChartBkGradientFill(colorBlack, colorBlack);
+_N(Title = StrFormat("{{NAME}} - {{INTERVAL}} {{DATE}} Open %g, Hi %g, Lo %g, Close %g (%.1f%%) {{VALUES}}", O, H, L, C, SelectedValue(ROC(C, 1))));
+Plot(C, "Close", IIf(C > O, colorLime, colorRed), styleCandle | styleNoTitle);
+FS = Param("Font Size", 30, 11, 100, 1);
+GfxSelectFont("Times New Roman", FS, 700, True);
+GfxSetBkMode(colorWhite);
+GfxSetTextColor(ParamColor("Color", colorGreen));
+Hor = Param("Horizontal Position", 940, 1, 1200, 1);
+Ver = Param("Vertical Position", 12, 1, 830, 1);
+GfxTextOut("" + C, Hor, Ver);
+YC = TimeFrameGetPrice("C", inDaily, -1);
+DD = Prec(C - YC, 2);
+xx = Prec((DD / YC) * 100, 2);
+GfxSelectFont("Times New Roman", 11, 700, True);
+GfxSetTextColor(ParamColor("Color", colorYellow));
+GfxTextOut("" + DD + "  (" + xx + "%)", Hor, Ver + 45);
+_SECTION_END();
+
+_SECTION_BEGIN("ORB");
+TargetPct = Param("Target Percentage", 0.75, 0.1, 500, 0.05) / 100;
+TrdBeginTime = 091500; //ParamTime("Trade Begin Time","09:30:00",0);
+TrdEndTime = ParamTime("Trade End Time", "14:45:00", 0);
+SqOffTime = ParamTime("Square Off Time", "15:10:00", 0);
+IsTrdTime = TimeNum() >= TrdBeginTime && TimeNum() <= TrdEndTime;
+IsSqOffTime = TimeNum() >= SqOffTime;
+MA1 = MA(C, Param("MA Period", 14, 1, 500, 1));
+MA1 = Ref(MA1, -1);
+Plot(MA1, "MA1", colorGold, styleLine);
+
+BarT = BarIndex() - Nz(ValueWhen(Day() != Ref(Day(), -1), BarIndex()), 0) + 1;
+DayH = HHV(H, BarT);
+DayL = LLV(L, BarT);
+PrevClose = TimeFrameGetPrice("C", inDaily, -1);
+TodayOpen = TimeFrameGetPrice("O", inDaily, 0);
+ORBCandle = (BarT == 1);
+ORBHigh = ValueWhen(ORBCandle, H);
+ORBLow = ValueWhen(ORBCandle, L);
+ORBClose = ValueWhen(ORBCandle, C);
+Trend = IIf((TodayOpen > PrevClose && ORBClose > MA1), 1, IIf((TodayOpen < PrevClose && ORBClose < MA1), -1, 0));
+ORBTrend = ValueWhen(ORBCandle, Trend);
+
+for (i = 0; i < BarCount; i++)
+{
+  if (BarT[i] == 1 && Trend[i] == 1)
+    PlotText("Long Trend", i, L[i] - (L[i] * 0.001), colorGreen);
+  if (BarT[i] == 1 && Trend[i] == -1)
+    PlotText("Short Trend", i, H[i] + (H[i] * 0.001), colorRed);
+}
+
+Buy = (BarT > 1 AND ORBTrend == 1 AND H >= ORBHigh AND IsTrdTime);
+Short = (BarT > 1 AND ORBTrend == -1 AND L <= ORBLow AND IsTrdTime);
+Buy = ExRem(Buy, ORBCandle);
+Short = ExRem(Short, ORBCandle);
+
+BuyPrice = ValueWhen(Buy, ORBHigh);
+ShortPrice = ValueWhen(Short, ORBLow);
+BuyTgtPrice = BuyPrice + (BuyPrice * TargetPct);
+BuySlPrice = ORBLow;
+ShortTgtPrice = ShortPrice - (ShortPrice * TargetPct);
+ShortSlPrice = ORBHigh;
+
+Sell = (H >= BuyTgtPrice OR L <= BuySLPrice OR IsSqOffTime OR Short) AND Buy == 0;
+Cover = (H >= ShortSLPrice OR L <= ShortTgtPrice OR IsSqOffTime OR Buy) AND Short == 0;
+Sell = IIf(Cum(Buy) == 0, 0, ExRem(Sell, Buy));
+Cover = IIf(Cum(Short) == 0, 0, ExRem(Cover, Short));
+
+PlotShapes(IIf(Buy, shapeHollowUpArrow, shapeNone), colorGreen, 0, L, Offset = -30);
+PlotShapes(IIf(Cover, shapeHollowStar, shapeNone), colorDarkGreen, 0, L, Offset = -50);
+PlotShapes(IIf(Short, shapeHollowDownArrow, shapeNone), colorRed, 0, H, Offset = -30);
+PlotShapes(IIf(Sell, shapeHollowStar, shapeNone), colorDarkRed, 0, H, Offset = 50);
+_SECTION_END();
+
+_SECTION_BEGIN("Bridge Code");
+bridge = CreateStaticObject("KotakNet.Bridge"); //Change
+helper = CreateStaticObject("KotakNet.Helper"); //Change
+
+exch = ParamList("Exchange","NSE",0);
+symbol = ParamStr("Enter Symbol","ITC");
+qty = Param("Quantity",1,1,5000,1);
+prodtype = ParamList("product Type","NRML|MIS",0);
+stgycode = ParamList("Stgycode","AA1|AB1|AB2|AB3|AB4|AB5",0);
+validity = "DAY";
+isasync = False;
+ltp = LastValue(C);
+trdsym = symbol;
+
+keylong = stgycode + symbol + "LONG";
+keyshort = stgycode + symbol + "SHORT";
+
+if (LastValue(Buy))
+{
+  reqstatus = helper.GetDictKey("PLACEENTRY", keylong, True, 0);
+  if (reqstatus == 0)
+  {
+    //order info
+    trans = "BUY";
+    lmtprice = 0;
+    trgprice = 0;
+    discqty = 0;
+    ordtype = "MARKET";
+    tag = helper.GetUniqueString();
+    requestid = helper.GetRequestId();
+
+    //place order
+    resp = bridge.PlaceRegularOrder(exch, trdsym, trans, ordtype, prodtype, qty, lmtprice, trgprice, discqty, validity, tag, stgycode, isasync, requestid, ltp, 0, "");
+
+    //store order details for use in exit call
+    helper.SetDictKey("ENTRYEXCH", keylong, exch);
+    helper.SetDictKey("ENTRYTRDSYM", keylong, trdsym);
+    helper.SetDictKey("ENTRYQTY", keylong, qty);
+    helper.SetDictKey("ENTRYPROD", keylong, prodtype);
+    helper.SetDictKey("ENTRYTAG", keylong, tag);
+    helper.SetDictKey("ENTRYRESP", keylong, resp);
+
+    //flags to remove multiple calls
+    helper.SetDictKey("PLACEENTRY", keylong, 1);
+    helper.SetDictKey("PLACEEXIT", keylong, 0);
+  }
+}
+
+if (LastValue(Sell))
+{
+  reqstatus = helper.GetDictKey("PLACEEXIT", keylong, True, 0);
+  isentry = helper.GetDictKey("PLACEENTRY", keylong, True, 0);
+  if (reqstatus == 0 && isentry ==1)
+  {
+    //check entry status
+    exch = helper.GetDictKey("ENTRYEXCH", keylong);
+    trdsym = helper.GetDictKey("ENTRYTRDSYM", keylong);
+    entrytag = helper.GetDictKey("ENTRYTAG", keylong);
+    qty = helper.GetDictKey("ENTRYQTY", keylong);
+    prodtype = helper.GetDictKey("ENTRYPROD", keylong);
+    entryorderid = bridge.GetOrderIDByTag(exch, trdsym, entrytag);
+    entrystatus = bridge.GetOrderStatus(entryorderid);
+
+    //order info
+    trans = "SELL";
+    lmtprice = 0;
+    trgprice = 0;
+    discqty = 0;
+    ordtype = "MARKET";
+    tag = helper.GetUniqueString();
+    requestid = helper.GetRequestId();
+
+    //place order
+    resp = entrystatus;
+    if (entrystatus == "COMPLETE")
+    {
+      resp = bridge.PlaceRegularOrder(exch, trdsym, trans, ordtype, prodtype, qty, lmtprice, trgprice, discqty, validity, tag, stgycode, isasync, requestid, ltp, 0, "");
+    }
+
+    //store order details
+    helper.SetDictKey("ENTRYSTATUS", keylong, entrystatus);
+    helper.SetDictKey("ENTRYID", keylong, entryorderid);
+    helper.SetDictKey("EXITTAG", keylong, tag);
+    helper.SetDictKey("EXITRESP", keylong, resp);
+
+    //flags to remove multiple calls
+    helper.SetDictKey("PLACEENTRY", keylong, 0);
+    helper.SetDictKey("PLACEEXIT", keylong, 1);
+  }
+}
+
+if (LastValue(Short))
+{
+  reqstatus = helper.GetDictKey("PLACEENTRY", keyshort, True, 0);
+  if (reqstatus == 0)
+  {
+    //order info
+    trans = "SELL";
+    lmtprice = 0;
+    trgprice = 0;
+    discqty = 0;
+    ordtype = "MARKET";
+    tag = helper.GetUniqueString();
+    requestid = helper.GetRequestId();
+
+    //place order
+    resp = bridge.PlaceRegularOrder(exch, trdsym, trans, ordtype, prodtype, qty, lmtprice, trgprice, discqty, validity, tag, stgycode, isasync, requestid, ltp, 0, "");
+
+    //store order details for use in exit call
+    helper.SetDictKey("ENTRYEXCH", keyshort, exch);
+    helper.SetDictKey("ENTRYTRDSYM", keyshort, trdsym);
+    helper.SetDictKey("ENTRYQTY", keyshort, qty);
+    helper.SetDictKey("ENTRYPROD", keyshort, prodtype);
+    helper.SetDictKey("ENTRYTAG", keyshort, tag);
+    helper.SetDictKey("ENTRYRESP", keyshort, resp);
+
+    //flags to remove multiple calls
+    helper.SetDictKey("PLACEENTRY", keyshort, 1);
+    helper.SetDictKey("PLACEEXIT", keyshort, 0);
+  }
+}
+
+if (LastValue(Cover))
+{
+  reqstatus = helper.GetDictKey("PLACEEXIT", keyshort, True, 0);
+  isentry = helper.GetDictKey("PLACEENTRY", keyshort, True, 0);
+  if (reqstatus == 0 && isentry ==1)
+  {
+    //check entry status
+    exch = helper.GetDictKey("ENTRYEXCH", keyshort);
+    trdsym = helper.GetDictKey("ENTRYTRDSYM", keyshort);
+    entrytag = helper.GetDictKey("ENTRYTAG", keyshort);
+    qty = helper.GetDictKey("ENTRYQTY", keyshort);
+    prodtype = helper.GetDictKey("ENTRYPROD", keyshort);
+    entryorderid = bridge.GetOrderIDByTag(exch, trdsym, entrytag);
+    entrystatus = bridge.GetOrderStatus(entryorderid);
+
+    //order info
+    trans = "BUY";
+    lmtprice = 0;
+    trgprice = 0;
+    discqty = 0;
+    ordtype = "MARKET";
+    tag = helper.GetUniqueString();
+    requestid = helper.GetRequestId();
+
+    //place order
+    resp = entrystatus;
+    if (entrystatus == "COMPLETE")
+    {
+      resp = bridge.PlaceRegularOrder(exch, trdsym, trans, ordtype, prodtype, qty, lmtprice, trgprice, discqty, validity, tag, stgycode, isasync, requestid, ltp, 0, "");
+    }
+
+    //store order details
+    helper.SetDictKey("ENTRYSTATUS", keyshort, entrystatus);
+    helper.SetDictKey("ENTRYID", keyshort, entryorderid);
+    helper.SetDictKey("EXITTAG", keyshort, tag);
+    helper.SetDictKey("EXITRESP", keyshort, resp);
+
+    //flags to remove multiple calls
+    helper.SetDictKey("PLACEENTRY", keyshort, 0);
+    helper.SetDictKey("PLACEEXIT", keyshort, 1);
+  }
+}
+_SECTION_END();
+
+_SECTION_BEGIN("Test Order");
+TestOrder = ParamTrigger("Test Order Placement", "Press");
+if (TestOrder)
+{
+  exch = "NSE";
+  trdsym = "PNB";
+  ltp = bridge.GetLtp(exch, trdsym);
+  if (!(ltp > 0))
+  {
+    ltp = bridge.GetSnapLtp(exch, trdsym);
+  }
+  if (ltp > 0)
+  {
+    lmtprice = ltp - (ltp * 0.01);
+    tag = helper.GetUniqueString();
+    requestID = helper.GetRequestId();
+    OrderId = bridge.PlaceRegularOrder(exch, trdsym, "BUY", "LIMIT", "NRML", 1, lmtPrice, 0, 0, "Day", tag, "DEM", False, requestID, ltp, 0, "test order from AFL");
+    PopupWindow("OrderId: " + OrderId, "Bridge");
+    helper.PauseExecution(1);
+    Resp = bridge.CancelRegularOrder(OrderId);
+  }
+  else
+  {
+    PopupWindow("Seems LTP not available, can't test order placement", "Bridge");
+  }
+}
+_SECTION_END();
