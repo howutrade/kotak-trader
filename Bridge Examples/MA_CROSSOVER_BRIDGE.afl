@@ -60,18 +60,34 @@ _SECTION_BEGIN("Bridge Code");
 bridge = CreateStaticObject("KotakNet.Bridge"); //Change
 helper = CreateStaticObject("KotakNet.Helper"); //Change
 
-exch = ParamList("Exchange","NSE",0);
-symbol = ParamStr("Enter Symbol","ITC");
-qty = Param("Quantity",1,1,5000,1);
-prodtype = ParamList("product Type","NRML|MIS",0);
-stgycode = ParamList("Stgycode","AA1|AB1|AB2|AB3|AB4|AB5",0);
+exch = ParamList("Exchange", "NSE", 0);
+symbol = ParamStr("Enter Symbol", "ITC");
+qty = Param("Quantity", 1, 1, 5000, 1);
+prodtype = ParamList("product Type", "NRML|MIS", 0);
+stgycode = ParamList("Stgycode", "AA1|AB1|AB2|AB3|AB4|AB5", 0);
 validity = "DAY";
 isasync = False;
-ltp = LastValue(C);
 trdsym = symbol;
 
 keylong = stgycode + symbol + "LONG";
 keyshort = stgycode + symbol + "SHORT";
+
+ltp = LastValue(C);
+logdate = NumToStr(Now(6), 1.0) + NumToStr(Now(7), 1.0) + NumToStr(Now(8), 2.0, False);
+logfile = "AMIBROKER_SIGNALS_" + logdate + ".txt";
+barnum = NumToStr(LastValue(BarIndex()),1.0,False);
+
+//add header
+//call only once
+statusheader = Nz(StaticVarGet("LOGFILE"));
+if (statusheader == 0)
+{
+  StaticVarSet("LOGFILE", 1);
+  if (helper.IsFileExists(logfile) == False)
+  {
+    helper.WriteTextFile(logfile, "LOGTIME,SIGNAL,EXCH,TRDSYM,TRANS,ORDTYPE,PRODTYPE,QTY,LMTPRICE,TRGPRICE,DISCQTY,TAG,STGYCODE,LTP,RESP,ENTRYID,ENTRYSTATUS,BARNUM", True);
+  }
+}
 
 if (LastValue(Buy))
 {
@@ -89,6 +105,9 @@ if (LastValue(Buy))
 
     //place order
     resp = bridge.PlaceRegularOrder(exch, trdsym, trans, ordtype, prodtype, qty, lmtprice, trgprice, discqty, validity, tag, stgycode, isasync, requestid, ltp, 0, "");
+
+    //log
+    helper.WriteTextFile(logfile, Now(0) + "," + "BUY" + "," + exch + "," + trdsym + "," + trans + "," + ordtype + "," + prodtype + "," + qty + "," + lmtprice + "," + trgprice + "," + discqty + "," + tag + "," + stgycode + "," + ltp + "," + resp + "," + "" + "," + "" + "," + barnum);
 
     //store order details for use in exit call
     helper.SetDictKey("ENTRYEXCH", keylong, exch);
@@ -108,7 +127,7 @@ if (LastValue(Sell))
 {
   reqstatus = helper.GetDictKey("PLACEEXIT", keylong, True, 0);
   isentry = helper.GetDictKey("PLACEENTRY", keylong, True, 0);
-  if (reqstatus == 0 && isentry ==1)
+  if (reqstatus == 0 && isentry == 1)
   {
     //check entry status
     exch = helper.GetDictKey("ENTRYEXCH", keylong);
@@ -134,6 +153,9 @@ if (LastValue(Sell))
     {
       resp = bridge.PlaceRegularOrder(exch, trdsym, trans, ordtype, prodtype, qty, lmtprice, trgprice, discqty, validity, tag, stgycode, isasync, requestid, ltp, 0, "");
     }
+
+    //log
+    helper.WriteTextFile(logfile, Now(0) + "," + "SELL" + "," + exch + "," + trdsym + "," + trans + "," + ordtype + "," + prodtype + "," + qty + "," + lmtprice + "," + trgprice + "," + discqty + "," + tag + "," + stgycode + "," + ltp + "," + resp + "," + entryorderid + "," + entrystatus + "," + barnum);
 
     //store order details
     helper.SetDictKey("ENTRYSTATUS", keylong, entrystatus);
@@ -164,6 +186,9 @@ if (LastValue(Short))
     //place order
     resp = bridge.PlaceRegularOrder(exch, trdsym, trans, ordtype, prodtype, qty, lmtprice, trgprice, discqty, validity, tag, stgycode, isasync, requestid, ltp, 0, "");
 
+    //log
+    helper.WriteTextFile(logfile, Now(0) + "," + "SHORT" + "," + exch + "," + trdsym + "," + trans + "," + ordtype + "," + prodtype + "," + qty + "," + lmtprice + "," + trgprice + "," + discqty + "," + tag + "," + stgycode + "," + ltp + "," + resp + "," + "" + "," + "" + "," + barnum);
+
     //store order details for use in exit call
     helper.SetDictKey("ENTRYEXCH", keyshort, exch);
     helper.SetDictKey("ENTRYTRDSYM", keyshort, trdsym);
@@ -182,7 +207,7 @@ if (LastValue(Cover))
 {
   reqstatus = helper.GetDictKey("PLACEEXIT", keyshort, True, 0);
   isentry = helper.GetDictKey("PLACEENTRY", keyshort, True, 0);
-  if (reqstatus == 0 && isentry ==1)
+  if (reqstatus == 0 && isentry == 1)
   {
     //check entry status
     exch = helper.GetDictKey("ENTRYEXCH", keyshort);
@@ -208,6 +233,9 @@ if (LastValue(Cover))
     {
       resp = bridge.PlaceRegularOrder(exch, trdsym, trans, ordtype, prodtype, qty, lmtprice, trgprice, discqty, validity, tag, stgycode, isasync, requestid, ltp, 0, "");
     }
+
+    //log
+    helper.WriteTextFile(logfile, Now(0) + "," + "COVER" + "," + exch + "," + trdsym + "," + trans + "," + ordtype + "," + prodtype + "," + qty + "," + lmtprice + "," + trgprice + "," + discqty + "," + tag + "," + stgycode + "," + ltp + "," + resp + "," + entryorderid + "," + entrystatus + "," + barnum);
 
     //store order details
     helper.SetDictKey("ENTRYSTATUS", keyshort, entrystatus);

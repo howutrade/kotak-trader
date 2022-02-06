@@ -1,0 +1,273 @@
+/*
+Coded by Howutrade Software Solutions LLP
+https://howutrade.in
+support@howutrade.in
+
+This is a SIMPLE bridge code
+You need to copy this entire code and paste at the end of your system AFL.
+Donot Copy/Paste multiple times
+
+User can input Symbol and order details in parameter window
+Make sure you logged in to KotakTrader
+
+What does this bridge code do?
+On Buy: It places a BUY order with order details entered by the user
+On Sell: It places a SELL order (only if the entry BUY order status is COMPLETE)
+On Short: It places a SELL order with order details entered by the user
+On Cover: It places a Buy order (only if the entry Sell order Status is COMPLETE)
+
+*If your AFL code has no 'SHORT' then remove the 'SHORT' and 'COVER' part of the bridge code while copying.
+
+Signals triggered in Amibroker is logged in file 'AMIBROKER_SIGNALS_DDMMYYYY.txt in Amibroker Folder
+Orders received from bridge and their status can be checked in KotakTrader->Reports->Bridge Requests
+
+You can also check test order placement from parameter window
+
+Troubleshooting:
+This bridge code will be good as long as your AFL code is correct.
+
+Most of the AFLs downloaded from the internet are not properly coded, they may show signals in static and backtesting, but will fail in live trading.
+Signals shown in static charts and backtesting are entirely different from live signals.
+For Example:
+In static chart, you won't see signal repainting, but in live you may get
+In backtest, you won't see repeated signals, but in live you may get
+In backtest, you might have set target and stop, but in live you should add those target and stop logic in your AFL code otherwise you won't get signals.
+
+Make sure the below things;
+Ensure your AFL doesn't generate Entry and Exit Signals on the same Bar (Extreme Dangerous)
+Ensure your AFL doesn't use future bars (Most scamsters sell AFL with future bars, but in live you never get those signals)
+Make sure your AFL contains all four signals BUY/SELL/SHORT/COVER
+Make sure your AFL uses Exrem to remove excess signals
+Make sure your AFL doesn't repaint (If close is used, then 100% AFL will repaint unless you added Signal = Ref(Signal, -1))
+Make sure Entry Signals have proper Exit Signals
+Make sure no Exit signals comes before Entry
+
+Others;
+Amibroker should be in focus throughout Market hours
+Recommended to run trading system in cloud server
+Do Not use any softwares other than what is required for algo trading
+Use data from authorized data vendor
+Do not change user inputs once the system is started except where it is permitted.
+*/
+
+_SECTION_BEGIN("Bridge Code");
+bridge = CreateStaticObject("KotakNet.Bridge"); //Change
+helper = CreateStaticObject("KotakNet.Helper"); //Change
+
+exch = ParamList("Exchange", "NSE", 0);
+symbol = ParamStr("Enter Symbol", "ITC");
+qty = Param("Quantity", 1, 1, 5000, 1);
+prodtype = ParamList("product Type", "NRML|MIS", 0);
+stgycode = ParamList("Stgycode", "AA1|AB1|AB2|AB3|AB4|AB5", 0);
+validity = "DAY";
+isasync = False;
+trdsym = symbol;
+
+keylong = stgycode + symbol + "LONG";
+keyshort = stgycode + symbol + "SHORT";
+
+ltp = LastValue(C);
+logdate = NumToStr(Now(6), 1.0) + NumToStr(Now(7), 1.0) + NumToStr(Now(8), 2.0, False);
+logfile = "AMIBROKER_SIGNALS_" + logdate + ".txt";
+barnum = NumToStr(LastValue(BarIndex()),1.0,False);
+
+//add header
+//call only once
+statusheader = Nz(StaticVarGet("LOGFILE"));
+if (statusheader == 0)
+{
+  StaticVarSet("LOGFILE", 1);
+  if (helper.IsFileExists(logfile) == False)
+  {
+    helper.WriteTextFile(logfile, "LOGTIME,SIGNAL,EXCH,TRDSYM,TRANS,ORDTYPE,PRODTYPE,QTY,LMTPRICE,TRGPRICE,DISCQTY,TAG,STGYCODE,LTP,RESP,ENTRYID,ENTRYSTATUS,BARNUM", True);
+  }
+}
+
+if (LastValue(Buy))
+{
+  reqstatus = helper.GetDictKey("PLACEENTRY", keylong, True, 0);
+  if (reqstatus == 0)
+  {
+    //order info
+    trans = "BUY";
+    lmtprice = 0;
+    trgprice = 0;
+    discqty = 0;
+    ordtype = "MARKET";
+    tag = helper.GetUniqueString();
+    requestid = helper.GetRequestId();
+
+    //place order
+    resp = bridge.PlaceRegularOrder(exch, trdsym, trans, ordtype, prodtype, qty, lmtprice, trgprice, discqty, validity, tag, stgycode, isasync, requestid, ltp, 0, "");
+
+    //log
+    helper.WriteTextFile(logfile, Now(0) + "," + "BUY" + "," + exch + "," + trdsym + "," + trans + "," + ordtype + "," + prodtype + "," + qty + "," + lmtprice + "," + trgprice + "," + discqty + "," + tag + "," + stgycode + "," + ltp + "," + resp + "," + "" + "," + "" + "," + barnum);
+
+    //store order details for use in exit call
+    helper.SetDictKey("ENTRYEXCH", keylong, exch);
+    helper.SetDictKey("ENTRYTRDSYM", keylong, trdsym);
+    helper.SetDictKey("ENTRYQTY", keylong, qty);
+    helper.SetDictKey("ENTRYPROD", keylong, prodtype);
+    helper.SetDictKey("ENTRYTAG", keylong, tag);
+    helper.SetDictKey("ENTRYRESP", keylong, resp);
+
+    //flags to remove multiple calls
+    helper.SetDictKey("PLACEENTRY", keylong, 1);
+    helper.SetDictKey("PLACEEXIT", keylong, 0);
+  }
+}
+
+if (LastValue(Sell))
+{
+  reqstatus = helper.GetDictKey("PLACEEXIT", keylong, True, 0);
+  isentry = helper.GetDictKey("PLACEENTRY", keylong, True, 0);
+  if (reqstatus == 0 && isentry == 1)
+  {
+    //check entry status
+    exch = helper.GetDictKey("ENTRYEXCH", keylong);
+    trdsym = helper.GetDictKey("ENTRYTRDSYM", keylong);
+    entrytag = helper.GetDictKey("ENTRYTAG", keylong);
+    qty = helper.GetDictKey("ENTRYQTY", keylong);
+    prodtype = helper.GetDictKey("ENTRYPROD", keylong);
+    entryorderid = bridge.GetOrderIDByTag(exch, trdsym, entrytag);
+    entrystatus = bridge.GetOrderStatus(entryorderid);
+
+    //order info
+    trans = "SELL";
+    lmtprice = 0;
+    trgprice = 0;
+    discqty = 0;
+    ordtype = "MARKET";
+    tag = helper.GetUniqueString();
+    requestid = helper.GetRequestId();
+
+    //place order
+    resp = entrystatus;
+    if (entrystatus == "COMPLETE")
+    {
+      resp = bridge.PlaceRegularOrder(exch, trdsym, trans, ordtype, prodtype, qty, lmtprice, trgprice, discqty, validity, tag, stgycode, isasync, requestid, ltp, 0, "");
+    }
+
+    //log
+    helper.WriteTextFile(logfile, Now(0) + "," + "SELL" + "," + exch + "," + trdsym + "," + trans + "," + ordtype + "," + prodtype + "," + qty + "," + lmtprice + "," + trgprice + "," + discqty + "," + tag + "," + stgycode + "," + ltp + "," + resp + "," + entryorderid + "," + entrystatus + "," + barnum);
+
+    //store order details
+    helper.SetDictKey("ENTRYSTATUS", keylong, entrystatus);
+    helper.SetDictKey("ENTRYID", keylong, entryorderid);
+    helper.SetDictKey("EXITTAG", keylong, tag);
+    helper.SetDictKey("EXITRESP", keylong, resp);
+
+    //flags to remove multiple calls
+    helper.SetDictKey("PLACEENTRY", keylong, 0);
+    helper.SetDictKey("PLACEEXIT", keylong, 1);
+  }
+}
+
+if (LastValue(Short))
+{
+  reqstatus = helper.GetDictKey("PLACEENTRY", keyshort, True, 0);
+  if (reqstatus == 0)
+  {
+    //order info
+    trans = "SELL";
+    lmtprice = 0;
+    trgprice = 0;
+    discqty = 0;
+    ordtype = "MARKET";
+    tag = helper.GetUniqueString();
+    requestid = helper.GetRequestId();
+
+    //place order
+    resp = bridge.PlaceRegularOrder(exch, trdsym, trans, ordtype, prodtype, qty, lmtprice, trgprice, discqty, validity, tag, stgycode, isasync, requestid, ltp, 0, "");
+
+    //log
+    helper.WriteTextFile(logfile, Now(0) + "," + "SHORT" + "," + exch + "," + trdsym + "," + trans + "," + ordtype + "," + prodtype + "," + qty + "," + lmtprice + "," + trgprice + "," + discqty + "," + tag + "," + stgycode + "," + ltp + "," + resp + "," + "" + "," + "" + "," + barnum);
+
+    //store order details for use in exit call
+    helper.SetDictKey("ENTRYEXCH", keyshort, exch);
+    helper.SetDictKey("ENTRYTRDSYM", keyshort, trdsym);
+    helper.SetDictKey("ENTRYQTY", keyshort, qty);
+    helper.SetDictKey("ENTRYPROD", keyshort, prodtype);
+    helper.SetDictKey("ENTRYTAG", keyshort, tag);
+    helper.SetDictKey("ENTRYRESP", keyshort, resp);
+
+    //flags to remove multiple calls
+    helper.SetDictKey("PLACEENTRY", keyshort, 1);
+    helper.SetDictKey("PLACEEXIT", keyshort, 0);
+  }
+}
+
+if (LastValue(Cover))
+{
+  reqstatus = helper.GetDictKey("PLACEEXIT", keyshort, True, 0);
+  isentry = helper.GetDictKey("PLACEENTRY", keyshort, True, 0);
+  if (reqstatus == 0 && isentry == 1)
+  {
+    //check entry status
+    exch = helper.GetDictKey("ENTRYEXCH", keyshort);
+    trdsym = helper.GetDictKey("ENTRYTRDSYM", keyshort);
+    entrytag = helper.GetDictKey("ENTRYTAG", keyshort);
+    qty = helper.GetDictKey("ENTRYQTY", keyshort);
+    prodtype = helper.GetDictKey("ENTRYPROD", keyshort);
+    entryorderid = bridge.GetOrderIDByTag(exch, trdsym, entrytag);
+    entrystatus = bridge.GetOrderStatus(entryorderid);
+
+    //order info
+    trans = "BUY";
+    lmtprice = 0;
+    trgprice = 0;
+    discqty = 0;
+    ordtype = "MARKET";
+    tag = helper.GetUniqueString();
+    requestid = helper.GetRequestId();
+
+    //place order
+    resp = entrystatus;
+    if (entrystatus == "COMPLETE")
+    {
+      resp = bridge.PlaceRegularOrder(exch, trdsym, trans, ordtype, prodtype, qty, lmtprice, trgprice, discqty, validity, tag, stgycode, isasync, requestid, ltp, 0, "");
+    }
+
+    //log
+    helper.WriteTextFile(logfile, Now(0) + "," + "COVER" + "," + exch + "," + trdsym + "," + trans + "," + ordtype + "," + prodtype + "," + qty + "," + lmtprice + "," + trgprice + "," + discqty + "," + tag + "," + stgycode + "," + ltp + "," + resp + "," + entryorderid + "," + entrystatus + "," + barnum);
+
+    //store order details
+    helper.SetDictKey("ENTRYSTATUS", keyshort, entrystatus);
+    helper.SetDictKey("ENTRYID", keyshort, entryorderid);
+    helper.SetDictKey("EXITTAG", keyshort, tag);
+    helper.SetDictKey("EXITRESP", keyshort, resp);
+
+    //flags to remove multiple calls
+    helper.SetDictKey("PLACEENTRY", keyshort, 0);
+    helper.SetDictKey("PLACEEXIT", keyshort, 1);
+  }
+}
+_SECTION_END();
+
+_SECTION_BEGIN("Test Order");
+TestOrder = ParamTrigger("Test Order Placement", "Press");
+if (TestOrder)
+{
+  exch = "NSE";
+  trdsym = "PNB";
+  ltp = bridge.GetLtp(exch, trdsym);
+  if (!(ltp > 0))
+  {
+    ltp = bridge.GetSnapLtp(exch, trdsym);
+  }
+  if (ltp > 0)
+  {
+    lmtprice = ltp - (ltp * 0.01);
+    tag = helper.GetUniqueString();
+    requestID = helper.GetRequestId();
+    OrderId = bridge.PlaceRegularOrder(exch, trdsym, "BUY", "LIMIT", "NRML", 1, lmtPrice, 0, 0, "Day", tag, "DEM", False, requestID, ltp, 0, "test order from AFL");
+    PopupWindow("OrderId: " + OrderId, "Bridge");
+    helper.PauseExecution(1);
+    Resp = bridge.CancelRegularOrder(OrderId);
+  }
+  else
+  {
+    PopupWindow("Seems LTP not available, can't test order placement", "Bridge");
+  }
+}
+_SECTION_END();
