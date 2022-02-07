@@ -784,6 +784,10 @@ Public Class Trader
 
         If ComboBoxReports.SelectedIndex = 0 Then
             DataGridView2.ContextMenuStrip = MenuOrderBook
+        ElseIf ComboBoxReports.SelectedIndex = 3 Then
+            DataGridView2.ContextMenuStrip = MenuPositions
+        ElseIf ComboBoxReports.SelectedIndex = 4 Then
+            DataGridView2.ContextMenuStrip = MenuHoldings
         Else
             DataGridView2.ContextMenuStrip = MenuOthers
         End If
@@ -912,8 +916,18 @@ Public Class Trader
             Exit Sub
         End If
 
-        ModifyToolStripMenuItem.Enabled = True
-        CancelToolStripMenuItem1.Enabled = True
+        '//Get Status
+        Dim RowIndex As Integer = DataGridView2.SelectedCells(0).RowIndex
+        Dim Status As String = DataGridView2.Rows(RowIndex).Cells(1).Value
+
+        If (Status.Equals("COMPLETE") OrElse Status.Equals("CANCELLED") OrElse Status.Equals("REJECTED")) Then
+            ModifyToolStripMenuItem.Enabled = False
+            CancelToolStripMenuItem1.Enabled = False
+        Else
+            ModifyToolStripMenuItem.Enabled = True
+            CancelToolStripMenuItem1.Enabled = True
+        End If
+
         ExportToolStripMenuItem.Enabled = True
     End Sub
 
@@ -981,5 +995,186 @@ Public Class Trader
         Dim rect As Rectangle = Me.Panel4.ClientRectangle
         Dim pen As New Pen(Color.FromArgb(220, 220, 240), 2)
         e.Graphics.DrawRectangle(pen, rect)
+    End Sub
+
+    Private Sub ToolStripMenuItem3_Click(sender As Object, e As EventArgs) Handles ExportToolStripMenuItem3.Click
+        ExportToCsv(DataGridView2)
+    End Sub
+
+    Private Sub ToolStripMenuItem4_Click(sender As Object, e As EventArgs) Handles ExportToolStripMenuItem4.Click
+        ExportToCsv(DataGridView2)
+    End Sub
+
+    Private Sub MenuOthers_Opening(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles MenuOthers.Opening
+        If Not (DataGridView2.Rows.Count > 0) Then
+            e.Cancel = True
+            Exit Sub
+        End If
+
+        If Not (DataGridView2.SelectedCells.Count > 0) Then
+            ExportToolStripMenuItem2.Enabled = False
+            Exit Sub
+        End If
+
+        If Not (Kotak.SymbolStatus) Then
+            ExportToolStripMenuItem2.Enabled = False
+            Exit Sub
+        End If
+
+        ExportToolStripMenuItem2.Enabled = True
+    End Sub
+
+    Private Sub MenuPositions_Opening(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles MenuPositions.Opening
+        If Not (DataGridView2.Rows.Count > 0) Then
+            e.Cancel = True
+            Exit Sub
+        End If
+
+        If Not (DataGridView2.SelectedCells.Count > 0) Then
+            ExitPosToolStripMenuItem.Enabled = False
+            ExportToolStripMenuItem3.Enabled = False
+            Exit Sub
+        End If
+
+        If Not (Kotak.SymbolStatus) Then
+            ExitPosToolStripMenuItem.Enabled = False
+            ExportToolStripMenuItem3.Enabled = False
+            Exit Sub
+        End If
+
+        '//Get Status
+        Dim RowIndex As Integer = DataGridView2.SelectedCells(0).RowIndex
+        Dim NetQty As Integer
+        Integer.TryParse(DataGridView2.Rows(RowIndex).Cells(4).Value, NetQty)
+
+        If NetQty = 0 Then
+            ExitPosToolStripMenuItem.Enabled = False
+        Else
+            ExitPosToolStripMenuItem.Enabled = True
+        End If
+
+        ExportToolStripMenuItem3.Enabled = True
+    End Sub
+
+    Private Sub MenuHoldings_Opening(sender As Object, e As System.ComponentModel.CancelEventArgs) Handles MenuHoldings.Opening
+        If Not (DataGridView2.Rows.Count > 0) Then
+            e.Cancel = True
+            Exit Sub
+        End If
+
+        If Not (DataGridView2.SelectedCells.Count > 0) Then
+            ExitHoldToolStripMenuItem.Enabled = False
+            ExportToolStripMenuItem4.Enabled = False
+            Exit Sub
+        End If
+
+        If Not (Kotak.SymbolStatus) Then
+            ExitHoldToolStripMenuItem.Enabled = False
+            ExportToolStripMenuItem4.Enabled = False
+            Exit Sub
+        End If
+
+        '//Get Status
+        Dim RowIndex As Integer = DataGridView2.SelectedCells(0).RowIndex
+        Dim NetQty As Integer
+        Integer.TryParse(DataGridView2.Rows(RowIndex).Cells(3).Value, NetQty)
+        Dim StockBal As Integer
+        Integer.TryParse(DataGridView2.Rows(RowIndex).Cells(2).Value, StockBal)
+
+        'Dim IsOpen As Boolean = (StockBal > 0 AndAlso (NetQty = 0 OrElse (StockBal + NetQty) = 0))
+        Dim IsOpen As Boolean = (StockBal > 0 AndAlso NetQty = 0)
+
+        If Not IsOpen Then
+            ExitHoldToolStripMenuItem.Enabled = False
+        Else
+            ExitHoldToolStripMenuItem.Enabled = True
+        End If
+
+        ExportToolStripMenuItem4.Enabled = True
+    End Sub
+
+    Private Sub ExitPosToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ExitPosToolStripMenuItem.Click
+        Try
+            Dim RowIndex As Integer = DataGridView2.SelectedCells(0).RowIndex
+            Dim Exch As String = DataGridView2.Rows(RowIndex).Cells(0).Value
+            Dim ProdType As String = DataGridView2.Rows(RowIndex).Cells(2).Value
+            Dim Token As String = DataGridView2.Rows(RowIndex).Cells(7).Value
+
+            Dim NetQty As Integer
+            Integer.TryParse(DataGridView2.Rows(RowIndex).Cells(4).Value, NetQty)
+
+            If Not (NetQty = 0) Then
+                Dim Trans As String = If(NetQty > 0, "SELL", "BUY")
+                Dim TrdSym As String = Kotak.GetTrdsym(Exch, Token)
+                Kotak.SubscribeQuotes(Exch, TrdSym) '//CHECK
+
+                Dim OrdType As String = "LIMIT"
+                Dim Qty As Integer = Math.Abs(NetQty)
+                Dim LmtPrice As Double
+
+                If Trans.Equals("BUY") Then
+                    LmtPrice = Kotak.GetUpperCircuit(Exch, TrdSym)
+                    If Not (LmtPrice > 0) Then
+                        LmtPrice = Kotak.GetHigh(Exch, TrdSym)
+                        If Not (LmtPrice > 0) Then
+                            OrdType = "MARKET"
+                        End If
+                    End If
+                Else
+                    LmtPrice = Kotak.GetLowerCircuit(Exch, TrdSym)
+                    If Not (LmtPrice > 0) Then
+                        LmtPrice = Kotak.GetLow(Exch, TrdSym)
+                        If Not (LmtPrice > 0) Then
+                            OrdType = "MARKET"
+                        End If
+                    End If
+                End If
+
+                Kotak.PlaceRegularOrder(Exch, TrdSym, Trans, OrdType, Qty, ProdType, LmtPrice, 0, 0, "DAY", Kotak.GetRequestId, "EXT", Kotak.GetUniqueString)
+                FetchReports()
+            End If
+        Catch ex As Exception
+            MsgBox(ex.Message, MsgBoxStyle.Exclamation, "KotakTrader")
+        End Try
+    End Sub
+
+    Private Sub ExitHoldToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles ExitHoldToolStripMenuItem.Click
+        Try
+            Dim RowIndex As Integer = DataGridView2.SelectedCells(0).RowIndex
+            Dim Exch As String = DataGridView2.Rows(RowIndex).Cells(0).Value
+            Dim Token As String = DataGridView2.Rows(RowIndex).Cells(8).Value
+
+            Dim NetQty As Integer
+            Integer.TryParse(DataGridView2.Rows(RowIndex).Cells(3).Value, NetQty)
+
+            Dim StockBal As Integer
+            Integer.TryParse(DataGridView2.Rows(RowIndex).Cells(2).Value, StockBal)
+
+            'Dim IsOpen As Boolean = (StockBal > 0 AndAlso (NetQty = 0 OrElse (StockBal + NetQty) = 0))
+            Dim IsOpen As Boolean = (StockBal > 0 AndAlso NetQty = 0)
+
+            If IsOpen Then
+                Dim Trans As String = "SELL"
+                Dim TrdSym As String = Kotak.GetTrdsym(Exch, Token)
+                Kotak.SubscribeQuotes(Exch, TrdSym) '//CHECK
+
+                Dim OrdType As String = "LIMIT"
+                Dim Qty As Integer = Math.Abs(StockBal)
+                Dim LmtPrice As Double
+
+                LmtPrice = Kotak.GetLowerCircuit(Exch, TrdSym)
+                If Not (LmtPrice > 0) Then
+                    LmtPrice = Kotak.GetLow(Exch, TrdSym)
+                    If Not (LmtPrice > 0) Then
+                        OrdType = "MARKET"
+                    End If
+                End If
+
+                Kotak.PlaceRegularOrder(Exch, TrdSym, Trans, OrdType, Qty, "NRML", LmtPrice, 0, 0, "DAY", Kotak.GetRequestId, "EXT", Kotak.GetUniqueString)
+                FetchReports()
+            End If
+        Catch ex As Exception
+            MsgBox(ex.Message, MsgBoxStyle.Exclamation, "KotakTrader")
+        End Try
     End Sub
 End Class

@@ -82,6 +82,12 @@ Partial Class Trader
         Me.MenuOthers = New System.Windows.Forms.ContextMenuStrip(Me.components)
         Me.ExportToolStripMenuItem2 = New System.Windows.Forms.ToolStripMenuItem()
         Me.SaveFileDialog1 = New System.Windows.Forms.SaveFileDialog()
+        Me.MenuPositions = New System.Windows.Forms.ContextMenuStrip(Me.components)
+        Me.ExitPosToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ExportToolStripMenuItem3 = New System.Windows.Forms.ToolStripMenuItem()
+        Me.MenuHoldings = New System.Windows.Forms.ContextMenuStrip(Me.components)
+        Me.ExitHoldToolStripMenuItem = New System.Windows.Forms.ToolStripMenuItem()
+        Me.ExportToolStripMenuItem4 = New System.Windows.Forms.ToolStripMenuItem()
         Me.Panel1.SuspendLayout()
         Me.Panel7.SuspendLayout()
         Me.TabControl1.SuspendLayout()
@@ -104,6 +110,8 @@ Partial Class Trader
         Me.Panel2.SuspendLayout()
         Me.StripMenu.SuspendLayout()
         Me.MenuOthers.SuspendLayout()
+        Me.MenuPositions.SuspendLayout()
+        Me.MenuHoldings.SuspendLayout()
         Me.SuspendLayout()
         '
         'Panel1
@@ -711,6 +719,42 @@ Partial Class Trader
         '
         Me.SaveFileDialog1.RestoreDirectory = True
         '
+        'MenuPositions
+        '
+        Me.MenuPositions.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.ExitPosToolStripMenuItem, Me.ExportToolStripMenuItem3})
+        Me.MenuPositions.Name = "MenuWatch"
+        Me.MenuPositions.Size = New System.Drawing.Size(139, 48)
+        '
+        'ExitPosToolStripMenuItem
+        '
+        Me.ExitPosToolStripMenuItem.Name = "ExitPosToolStripMenuItem"
+        Me.ExitPosToolStripMenuItem.Size = New System.Drawing.Size(138, 22)
+        Me.ExitPosToolStripMenuItem.Text = "Exit Position"
+        '
+        'ExportToolStripMenuItem3
+        '
+        Me.ExportToolStripMenuItem3.Name = "ExportToolStripMenuItem3"
+        Me.ExportToolStripMenuItem3.Size = New System.Drawing.Size(138, 22)
+        Me.ExportToolStripMenuItem3.Text = "Export"
+        '
+        'MenuHoldings
+        '
+        Me.MenuHoldings.Items.AddRange(New System.Windows.Forms.ToolStripItem() {Me.ExitHoldToolStripMenuItem, Me.ExportToolStripMenuItem4})
+        Me.MenuHoldings.Name = "MenuWatch"
+        Me.MenuHoldings.Size = New System.Drawing.Size(139, 48)
+        '
+        'ExitHoldToolStripMenuItem
+        '
+        Me.ExitHoldToolStripMenuItem.Name = "ExitHoldToolStripMenuItem"
+        Me.ExitHoldToolStripMenuItem.Size = New System.Drawing.Size(138, 22)
+        Me.ExitHoldToolStripMenuItem.Text = "Exit Holding"
+        '
+        'ExportToolStripMenuItem4
+        '
+        Me.ExportToolStripMenuItem4.Name = "ExportToolStripMenuItem4"
+        Me.ExportToolStripMenuItem4.Size = New System.Drawing.Size(138, 22)
+        Me.ExportToolStripMenuItem4.Text = "Export"
+        '
         'Trader
         '
         Me.AutoScaleDimensions = New System.Drawing.SizeF(6.0!, 13.0!)
@@ -746,6 +790,8 @@ Partial Class Trader
         Me.StripMenu.ResumeLayout(False)
         Me.StripMenu.PerformLayout()
         Me.MenuOthers.ResumeLayout(False)
+        Me.MenuPositions.ResumeLayout(False)
+        Me.MenuHoldings.ResumeLayout(False)
         Me.ResumeLayout(False)
 
     End Sub
@@ -805,5 +851,11 @@ Partial Class Trader
     Friend WithEvents LabelStatus As System.Windows.Forms.Label
     Friend WithEvents PictureBox2 As System.Windows.Forms.PictureBox
     Friend WithEvents TableLayoutPanel4 As System.Windows.Forms.TableLayoutPanel
+    Friend WithEvents MenuPositions As System.Windows.Forms.ContextMenuStrip
+    Friend WithEvents ExitPosToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents ExportToolStripMenuItem3 As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents MenuHoldings As System.Windows.Forms.ContextMenuStrip
+    Friend WithEvents ExitHoldToolStripMenuItem As System.Windows.Forms.ToolStripMenuItem
+    Friend WithEvents ExportToolStripMenuItem4 As System.Windows.Forms.ToolStripMenuItem
 
 End Class

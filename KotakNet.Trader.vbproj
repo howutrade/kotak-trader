@@ -73,17 +73,9 @@
     </AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="KotakNet.Bridge, Version=1.0.0.0, Culture=neutral, PublicKeyToken=8efb5b59d38a023c, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\References\KotakNet.Bridge.dll</HintPath>
-    </Reference>
     <Reference Include="KotakNet.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=ccd83257e011c25a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>..\..\..\References\KotakNet.Core.dll</HintPath>
-    </Reference>
-    <Reference Include="KotakNet.Rtd, Version=1.0.0.0, Culture=neutral, PublicKeyToken=4222d06e82427f1b, processorArchitecture=MSIL">
-      <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\References\KotakNet.Rtd.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -168,8 +160,6 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="Logo.ico" />
-    <None Include="Resources\NiftyNext50.txt" />
-    <None Include="Resources\Nifty50.txt" />
   </ItemGroup>
   <ItemGroup>
     <BootstrapperPackage Include="Microsoft.Net.Client.3.5">
