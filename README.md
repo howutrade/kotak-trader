@@ -169,18 +169,18 @@ ordstatus = bridge.GetOrderStatus("13805896989");
 
 # Common Parameters
 
-| Parameter  | Value |
-| ------------- | ------------- |
-| Exch  | NSE|NFO|BSE|CDS|MCX  |
-| Trdsym  | CASH: Symbol (Ex: ITC)  |
-| ...  | FUT: [SYMBOL][YYMMMDD][FUT] (Ex: NIFTY22FEB24FUT)  |
-|...  | OPT: [SYMBOL][YYMMMDD][STRIKE][OPT] (Ex: NIFTY22FEB2417300CE)  |
-| Transactions  | BUY|SELL (SHORT|COVER)  |
-| Order Type  | LIMIT|MARKET|SL|SL-M  |
-| Product Type  | MIS|NRML  |
-| Quantity | CASH: Number of shares to Buy or Sell  |
-| ...  | FNO: Number of lots to Buy or Sell (Not LotSize)  |
-| Validity  | DAY|IOC  |
-| Limit/Trigger Price  | Number (KotakNet will automatically round the price to ticksize)  |
-| Stgycode  | Alphanumeric, must be 3 characters  |
-| Tag  | Alphanumeric, must be 3-24 characters |
+| Parameter | Value |
+| --- | --- |
+| Exch | NSE,NFO,BSE,CDS,MCX |
+| Trdsym | CASH: Symbol (Ex: ITC)  |
+| ... | FUT: [SYMBOL][YYMMMDD][FUT] (Ex: NIFTY22FEB24FUT) |
+|... | OPT: [SYMBOL][YYMMMDD][STRIKE][OPT] (Ex: NIFTY22FEB2417300CE) |
+| Transactions | BUY,SELL (SHORT,COVER) |
+| Order Type | LIMIT,MARKET,SL,SL-M |
+| Product Type | MIS,NRML |
+| Quantity | CASH: Number of shares to Buy or Sell |
+| ... | FNO: Number of lots to Buy or Sell (Not LotSize) |
+| Validity | DAY,IOC |
+| Limit/Trigger Price | Number (KotakNet will automatically round the price to ticksize) |
+| Stgycode | Alphanumeric, must be 3 characters |
+| Tag | Alphanumeric, must be 3-24 characters |
