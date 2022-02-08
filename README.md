@@ -93,6 +93,14 @@ End Module
 
 *In real case scenario, you need to add static variables (wherever applicable) to remove redundant calls*
 
+# Kotak API Subscription
+
+For API subscription, check the this link
+https://www.kotaksecurities.com/offers/trading-tools/trading-api/index.html
+
+```diff
+- (By default websocket is disabled for Kotak API, users has to enable websocket from their Kotak dashboard or email to ks.apihelp@kotak.com for enabling websocket.)
+```
 # KotakNet Bridge
 
 Excel, AmiBroker and Other Bridge users who just want to place orders from their TA software can use KotakTrader as a frontend to receive bridge requests.
