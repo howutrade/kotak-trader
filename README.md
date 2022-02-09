@@ -1,42 +1,194 @@
 # Kotak Trader
 Trading Platform built with KotakNet
 
-KotakTrader is a simple winform application built with KotakNet (DotNet Library for Kotak API). KotakTrader supports all basic functionalities of a trdaing paltform. You can check the demo here https://github.com/howutrade/kotak-trader/tree/main/demo
-
-The main purpose of the KotakTrader is to show how to use KotakNet in your program and call its functions. DotNet Develpoers can get started with KotakTrader or develop from the scratch.
+KotakTrader is a lightweight trading platform built with KotakNet. It's a winform and supports all the standard features of a trading platform. You can preview the demo here https://www.youtube.com/watch?v=VXgyNz0nZg4
 
 # KotakNet DotNet Library
 
-KotakNet is a highly reliable, efficient and scalabe DotNet libary built for Kotak API. KotakNet can be used to build trade or execution algorithms or can be used to build personalised trdaing platform.
+KotakNet is a highly reliable, scalable and efficient DotNet Library for Kotak API. KotakNet provides complete set of tools required by the developers to build algo trading systems, it greatly reduces burden of the developers and helps to deploy their trading system very quickly.
 
 Components of KotakNet:
 
-1. KotakNet.Core.dll
-2. KotakNet.Bridge.dll
-3. KotakNet.Rtd.dll
+* KotakNet.Core.dll
+* KotakNet.Bridge.dll
+* KotakNet.Rtd.dll
 
-KotakNet.Core.dll wraps all the methods supported by Kotak API. This is where user session is maintained.
-KotakNet.Bridge can be used to place orders from Excel, AmiBroker and any program that supports COM
-KotakNet.Rtd streams the websocket quotes receivecd from kotak server to excel through RTD
+KotakNet.Core.dll wraps all the methods supported by Kotak API. This is where the user session is maintained. It has all methods that are necessary to build a standard trdaing platform
 
-Core and Bridge Documentation:
-https://howutrade.github.io/kotak-trader/html/R_Project_Documentation.htm
+DotNet developers can build console or Winform or WPF application on the top of KotakNet.Core, build and deploy customized execution algos (like Spread orders, P2M etc) or build personalized trading platforms for clients.
 
-# For Non-Developers and AFL/VBA Coders
-Non-developers, AFL/VBA coders and those who just want to place orders from their TA program can use Bridge. They can use KotakTrader as a frontend to login and receive order requests from Bridge.
+DotNet developers can get started with KotakTrader or build from the scratch.
 
-Installing KotakTrader is a very simple;
+KotakNet Documentation:
+https://howutrade.github.io/kotaknet-doc/
 
-1. Just downoad the release zip file from the below link
+## Quick Start (Build from Scratch)
+```
+Imports KotakNet.Core
+Imports System.Threading
+
+Module Demo
+    Public Kotak As New Kotak
+
+    ''' This is a basic example without any error handling
+    Sub Main()
+        '///Set Credentials
+        '///set UserID property first before other properties as the settings are saved to file with 'UserID' as name
+        Kotak.UserID = "XXXXXXXXX"
+        Kotak.ConsumerKey = "xxxxxxxxxxxxxxxxxxxx"
+        Kotak.ConsumerSecret = "xxxxxxxxxxxxxxxxxx"
+        Kotak.AccessToken = "xxxxxxxxxx"
+        Kotak.Password = "xxxx"
+
+        '///Subscribe to Events
+        AddHandler Kotak.AppUpdateEvent, AddressOf AppUpdate
+        AddHandler Kotak.OrderUpdateEvent, AddressOf OrderUpdate
+        AddHandler Kotak.QuotesReceivedEvent, AddressOf QuotesReceived
+
+        '///Login to get Session Token
+        Kotak.Login()
+
+        '///Download Symbols
+        Kotak.GetMasterContract()
+
+        '/// Wait for the symbols to download
+        Dim count As Integer = 0
+        Do
+            count = count + 1
+            Thread.Sleep(1000)
+            If (Kotak.SymbolStatus OrElse count > 300) Then Exit Do
+        Loop
+
+        If Not Kotak.SymbolStatus Then
+            MsgBox("Symbol download fail", MsgBoxStyle.Exclamation, "KotakNet")
+            Exit Sub
+        End If
+
+        '///Subscribe for Quotes
+        Kotak.SubscribeQuotes("NSE", "ITC")
+        Kotak.SubscribeQuotes("MCX", "CRUDEOIL22FEB18FUT")
+
+        '///Place an order
+        Dim OrderId As String = Kotak.PlaceRegularOrder("NSE", "ITC", "BUY", "MARKET", 1, "NRML", 0, 0)
+        Console.WriteLine("OrderID: " & OrderId)
+
+        Console.WriteLine("Press Any Key to exit")
+        Console.ReadKey()
+    End Sub
+
+    Private Sub OrderUpdate(sender As Object, e As OrderUpdateEventArgs)
+        Console.WriteLine("OrderUpdate - OrderId: " & e.OrderId & " Status: " & e.Status)
+    End Sub
+
+    Private Sub AppUpdate(sender As Object, e As AppUpdateEventArgs)
+        Console.WriteLine("AppUpdate - Message: " & e.EventMessage)
+    End Sub
+
+    Private Sub QuotesReceived(sender As Object, e As QuotesReceivedEventArgs)
+        Console.WriteLine("QuotesReceived - Symbol: " & e.TrdSym & " Ltp: " & e.LTP & " LTT: " & e.LTT.ToString("HH:mm:ss"))
+    End Sub
+End Module
+```
+*set UserID property first before other properties as the settings are saved to file with 'UserID' as name*
+
+*In real case scenario, you need to add static variables (wherever applicable) to remove redundant calls*
+
+# Kotak API Subscription
+
+For API subscription, check the this link
+https://www.kotaksecurities.com/offers/trading-tools/trading-api/index.html
+
+```diff
+- (By default websocket is disabled for Kotak API, users has to enable websocket from their Kotak dashboard or email to ks.apihelp@kotak.com for enabling websocket.)
+```
+# KotakNet Bridge
+
+Excel, AmiBroker and Other Bridge users who just want to place orders from their TA software can use KotakTrader as a frontend to receive bridge requests.
+
+Installing KotakTrader is simple, download the release zip file from the below link
 https://github.com/howutrade/kotak-trader/releases
 
-2. Extract the contents of the downloaded zip file to a folder and follow the readme file
+Extract the zip file to a folder and follow the ReadMe file
+Uers can refer the Bridge code samples to get started
 
-Example AFL and Excel Bridde codes:
-https://github.com/howutrade/kotak-trader/tree/main/Bridge%20Examples
+Bridge Docs: https://howutrade.github.io/kotaknet-doc/html/T_KotakNet_Bridge_Bridge.htm
 
-Bridge Documention:
-https://howutrade.github.io/kotak-trader/html/N_KotakNet_Bridge.htm
+## Excel VBA
 
-*In real time scenario, you need to use static variables to restrict multiple order firing
-*Bridge also supports dictinary function that can be used to manipulate static variables
+### Early Binding (Recommended)
+To call Bridge functions from VBA, you need to add Reference 'Bridge For KotakNet'
+In VBA Editor, Menu -> Tools -> References
+From the available references select 'Bridge For KotakNet'
+Declare a global Bridge Object in a module
+
+```Public Bridge As New Bridge```
+
+```
+Dim Resp As String
+
+'Place Order
+Resp = Bridge.PlaceRegularOrder("NSE", "ITC", "BUY", "MARKET", "NRML", 2, 0, 0)
+
+'Cancel Regular Order
+Resp = Bridge.CancelRegularOrder("13805896989")
+
+'Get Order Status
+ordstatus = Bridge.GetOrderStatus("13805896989")
+```
+
+### Late Binding
+For late binding, just create Bridge object and call the required functions
+
+```
+'Create Bridge Object
+Dim Bridge As Object
+Set Bridge = CreateObject("KotakNet.Bridge")
+
+Dim Resp As String
+
+'Place Order
+Resp = Bridge.PlaceRegularOrder("NSE", "ITC", "BUY", "MARKET", "NRML", 2, 0, 0)
+
+'Cancel Regular Order
+Resp = Bridge.CancelRegularOrder("13805896989")
+
+'Get Order Status
+ordstatus = Bridge.GetOrderStatus("13805896989")
+```
+
+## Amibroker AFL
+To call Bridge functions, you just need to create a Bridge object and call the required functions
+
+```
+//Create Bridge object
+bridge = CreateStaticObject("KotakNet.Bridge");
+
+//Place Order
+resp = bridge.PlaceRegularOrder("NSE", "ITC", "BUY", "MARKET", "NRML", 2, 0, 0);
+
+//Cancel Regular Order
+resp = bridge.CancelRegularOrder("13805896989");
+
+//Get Order Status
+ordstatus = bridge.GetOrderStatus("13805896989");
+```
+
+*In real case scenario, you need to add static variables (wherever applicable) to remove redundant calls*
+
+# Common Parameters
+
+| Parameter | Value |
+| --- | --- |
+| Exch | NSE,NFO,BSE,CDS,MCX |
+| Trdsym | CASH: Symbol (Ex: ITC)  |
+| ... | FUT: [SYMBOL][YYMMMDD][FUT] (Ex: NIFTY22FEB24FUT) |
+|... | OPT: [SYMBOL][YYMMMDD][STRIKE][OPT] (Ex: NIFTY22FEB2417300CE) |
+| Transactions | BUY,SELL (SHORT,COVER) |
+| Order Type | LIMIT,MARKET,SL,SL-M |
+| Product Type | MIS,NRML |
+| Quantity | CASH: Number of shares to Buy or Sell |
+| ... | FNO: Number of lots to Buy or Sell (Not LotSize) |
+| Validity | DAY,IOC |
+| Limit/Trigger Price | Number (KotakNet will automatically round the price to ticksize) |
+| Stgycode | Alphanumeric, must be 3 characters |
+| Tag | Alphanumeric, must be 3-24 characters |
