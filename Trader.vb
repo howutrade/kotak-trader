@@ -3,11 +3,7 @@ Imports System.Text
 Imports System.Threading
 Imports System.Net
 Imports KotakNet.Core
-Imports System.Runtime.InteropServices
-Imports System.Runtime.Serialization
 Imports System.Runtime.Serialization.Formatters.Binary
-Imports System.Globalization
-Imports Newtonsoft.Json
 
 Public Class Trader
     Private IsFormLoaded As Boolean = False
@@ -443,7 +439,7 @@ Public Class Trader
     Private Sub DelSymbolFromMarketWatch()
         SyncLock (LockWatch)
             Try
-                If (DataGridView1.SelectedRows.Count <= 0 AndAlso DataGridView1.SelectedCells.Count <= 0) Then Exit Sub
+                If Not (DataGridView1.SelectedCells.Count > 0) Then Exit Sub
 
                 If Not Kotak.SymbolStatus Then Exit Sub
                 If Kotak.LogoutStatus Then Exit Sub
@@ -452,20 +448,14 @@ Public Class Trader
                 Dim Exch As String
                 Dim TrdSym As String
 
-                If DataGridView1.SelectedRows.Count > 0 Then
-                    With DataGridView1
-                        InstToken = .SelectedRows(0).Cells(19).Value.ToString().Trim  'Last Column 'Check
-                        Exch = .SelectedRows(0).Cells(0).Value.ToString().Trim
-                        TrdSym = .SelectedRows(0).Cells(1).Value.ToString().Trim
-                    End With
-                Else
-                    With DataGridView1
-                        Dim RowIndex As Integer = .SelectedCells(0).RowIndex
-                        InstToken = .Rows(RowIndex).Cells(19).Value.ToString().Trim 'Last Column
-                        Exch = .Rows(RowIndex).Cells(0).Value.ToString().Trim
-                        TrdSym = .Rows(RowIndex).Cells(1).Value.ToString().Trim
-                    End With
-                End If
+
+                With DataGridView1
+                    Dim RowIndex As Integer = .SelectedCells(0).RowIndex
+                    InstToken = .Rows(RowIndex).Cells(19).Value.ToString().Trim 'Last Column
+                    Exch = .Rows(RowIndex).Cells(0).Value.ToString().Trim
+                    TrdSym = .Rows(RowIndex).Cells(1).Value.ToString().Trim
+                End With
+
 
                 If String.IsNullOrEmpty(InstToken) Then Exit Sub
                 Dim SymbolExch As String = TrdSym & "." & Exch
@@ -958,7 +948,7 @@ Public Class Trader
     End Sub
 
     Private Sub APIReferenceToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles APIReferenceToolStripMenuItem.Click
-        Process.Start("https://howutrade.github.io/kotak-trader/")
+        Process.Start("https://howutrade.github.io/kotaknet-doc/")
     End Sub
 
     Private Sub BuyToolStripMenuItem_Click(sender As Object, e As EventArgs) Handles BuyToolStripMenuItem.Click

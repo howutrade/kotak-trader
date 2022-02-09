@@ -682,7 +682,7 @@ Partial Class Trader
         '
         Me.APIReferenceToolStripMenuItem.Image = CType(resources.GetObject("APIReferenceToolStripMenuItem.Image"), System.Drawing.Image)
         Me.APIReferenceToolStripMenuItem.Name = "APIReferenceToolStripMenuItem"
-        Me.APIReferenceToolStripMenuItem.Size = New System.Drawing.Size(147, 22)
+        Me.APIReferenceToolStripMenuItem.Size = New System.Drawing.Size(152, 22)
         Me.APIReferenceToolStripMenuItem.Text = "API Reference"
         '
         'ToolStripMenuItem6
@@ -690,7 +690,7 @@ Partial Class Trader
         Me.ToolStripMenuItem6.Image = CType(resources.GetObject("ToolStripMenuItem6.Image"), System.Drawing.Image)
         Me.ToolStripMenuItem6.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
         Me.ToolStripMenuItem6.Name = "ToolStripMenuItem6"
-        Me.ToolStripMenuItem6.Size = New System.Drawing.Size(147, 22)
+        Me.ToolStripMenuItem6.Size = New System.Drawing.Size(152, 22)
         Me.ToolStripMenuItem6.Text = "View Help"
         Me.ToolStripMenuItem6.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
         '
@@ -699,7 +699,7 @@ Partial Class Trader
         Me.ToolStripMenuItem7.Image = CType(resources.GetObject("ToolStripMenuItem7.Image"), System.Drawing.Image)
         Me.ToolStripMenuItem7.ImageAlign = System.Drawing.ContentAlignment.MiddleLeft
         Me.ToolStripMenuItem7.Name = "ToolStripMenuItem7"
-        Me.ToolStripMenuItem7.Size = New System.Drawing.Size(147, 22)
+        Me.ToolStripMenuItem7.Size = New System.Drawing.Size(152, 22)
         Me.ToolStripMenuItem7.Text = "About"
         Me.ToolStripMenuItem7.TextAlign = System.Drawing.ContentAlignment.MiddleLeft
         '
