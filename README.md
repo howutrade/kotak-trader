@@ -98,12 +98,14 @@ End Module
 For Index data, pass Exch as "NSE_INDEX"
 
 Index supported by Kotak API
-NIFTY 100
-NIFTY 50
-NIFTY BANK
-NIFTY CPSE
-NIFTY IT
-NIFTY PSE
+| Index |
+| --- |
+| NIFTY 100 |
+| NIFTY 50 |
+| NIFTY BANK |
+| NIFTY CPSE |
+| NIFTY IT |
+| NIFTY PSE |
 
 Example:
 SubscribeQuotes("NSE_INDEX", "NIFTY 50")
