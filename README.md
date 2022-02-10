@@ -93,6 +93,21 @@ End Module
 
 *In real case scenario, you need to add static variables (wherever applicable) to remove redundant calls*
 
+# Indices Live Data
+
+For Index data, pass Exch as "NSE_INDEX"
+
+Index supported by Kotak API
+NIFTY 100
+NIFTY 50
+NIFTY BANK
+NIFTY CPSE
+NIFTY IT
+NIFTY PSE
+
+Example:
+SubscribeQuotes("NSE_INDEX", "NIFTY 50")
+
 # Kotak API Subscription
 
 For API subscription, check the this link
