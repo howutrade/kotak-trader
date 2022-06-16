@@ -122,10 +122,9 @@ https://www.kotaksecurities.com/offers/trading-tools/trading-api/index.html
 
 Excel, AmiBroker and Other Bridge users who just want to place orders from their TA software can use KotakTrader as a frontend to receive bridge requests.
 
-Installing KotakTrader is simple, download the release zip file from the below link
-https://github.com/howutrade/kotak-trader/releases
+Installing KotakTrader is simple, download the setup file from the below link and run as Administrator
+https://howutrade.in/app-data/?productcode=kotaknet
 
-Extract the zip file to a folder and follow the ReadMe file
 Uers can refer the Bridge code samples to get started
 
 Bridge Docs: https://howutrade.github.io/kotaknet-doc/html/T_KotakNet_Bridge_Bridge.htm
