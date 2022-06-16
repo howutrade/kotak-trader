@@ -6,8 +6,8 @@
     <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
     <ProjectGuid>{8C6F75A1-E213-441E-83F6-F2ECDE62FA83}</ProjectGuid>
     <OutputType>WinExe</OutputType>
-    <StartupObject>KotakNet.Trader.My.MyApplication</StartupObject>
-    <RootNamespace>KotakNet.Trader</RootNamespace>
+    <StartupObject>KotakTrader.My.MyApplication</StartupObject>
+    <RootNamespace>KotakTrader</RootNamespace>
     <AssemblyName>KotakTrader</AssemblyName>
     <FileAlignment>512</FileAlignment>
     <MyType>WindowsForms</MyType>
@@ -66,16 +66,15 @@
     <ApplicationIcon>Logo.ico</ApplicationIcon>
   </PropertyGroup>
   <PropertyGroup>
-    <SignAssembly>false</SignAssembly>
+    <SignAssembly>true</SignAssembly>
   </PropertyGroup>
   <PropertyGroup>
-    <AssemblyOriginatorKeyFile>
-    </AssemblyOriginatorKeyFile>
+    <AssemblyOriginatorKeyFile>KotakTrader.snk</AssemblyOriginatorKeyFile>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="KotakNet.Core, Version=1.0.0.0, Culture=neutral, PublicKeyToken=ccd83257e011c25a, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
-      <HintPath>..\..\..\References\KotakNet.Core.dll</HintPath>
+      <HintPath>..\..\..\References\MyBuilds\KotakNet.Core.dll</HintPath>
     </Reference>
     <Reference Include="Newtonsoft.Json, Version=9.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
@@ -147,6 +146,8 @@
     </EmbeddedResource>
   </ItemGroup>
   <ItemGroup>
+    <None Include="KotakTrader.pfx" />
+    <None Include="KotakTrader.snk" />
     <None Include="My Project\Application.myapp">
       <Generator>MyApplicationCodeGenerator</Generator>
       <LastGenOutput>Application.Designer.vb</LastGenOutput>
@@ -175,8 +176,14 @@
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
   <PropertyGroup>
-    <PostBuildEvent>
-    </PostBuildEvent>
+    <PostBuildEvent>del "$(SolutionDir)COMPILED" /q
+copy /Y "$(TargetDir)$(TargetName)$(TargetExt)" "$(SolutionDir)COMPILED"
+
+del "..\..\..\..\..\Resources\$(TargetName)$(TargetExt)" /q
+copy /Y "$(TargetDir)$(TargetName)$(TargetExt)" "..\..\..\..\..\Resources\$(TargetName)$(TargetExt)"
+
+del "..\..\..\..\..\Resources\$(TargetName)$(TargetExt).config" /q
+copy /Y "$(TargetDir)$(TargetName)$(TargetExt).config" "..\..\..\..\..\Resources\$(TargetName)$(TargetExt).config"</PostBuildEvent>
   </PropertyGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

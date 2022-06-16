@@ -32,7 +32,7 @@ Namespace My
         
         <Global.System.Diagnostics.DebuggerStepThroughAttribute()>  _
         Protected Overrides Sub OnCreateMainForm()
-            Me.MainForm = Global.KotakNet.Trader.Trader
+            Me.MainForm = Global.KotakTrader.Trader
         End Sub
     End Class
 End Namespace

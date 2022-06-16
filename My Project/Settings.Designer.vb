@@ -53,20 +53,32 @@ Namespace My
                 Return defaultInstance
             End Get
         End Property
+
+        <Global.System.Configuration.UserScopedSettingAttribute(), _
+         Global.System.Diagnostics.DebuggerNonUserCodeAttribute(), _
+         Global.System.Configuration.DefaultSettingValueAttribute("0.0.0.0")> _
+        Public Property LastVersion() As String
+            Get
+                Return CType(Me("LastVersion"), String)
+            End Get
+            Set(value As String)
+                Me("LastVersion") = value
+            End Set
+        End Property
     End Class
 End Namespace
 
 Namespace My
-    
-    <Global.Microsoft.VisualBasic.HideModuleNameAttribute(),  _
-     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(),  _
-     Global.System.Runtime.CompilerServices.CompilerGeneratedAttribute()>  _
+
+    <Global.Microsoft.VisualBasic.HideModuleNameAttribute(), _
+     Global.System.Diagnostics.DebuggerNonUserCodeAttribute(), _
+     Global.System.Runtime.CompilerServices.CompilerGeneratedAttribute()> _
     Friend Module MySettingsProperty
-        
-        <Global.System.ComponentModel.Design.HelpKeywordAttribute("My.Settings")>  _
-        Friend ReadOnly Property Settings() As Global.KotakNet.Trader.My.MySettings
+
+        <Global.System.ComponentModel.Design.HelpKeywordAttribute("My.Settings")> _
+        Friend ReadOnly Property Settings() As Global.KotakTrader.My.MySettings
             Get
-                Return Global.KotakNet.Trader.My.MySettings.Default
+                Return Global.KotakTrader.My.MySettings.Default
             End Get
         End Property
     End Module

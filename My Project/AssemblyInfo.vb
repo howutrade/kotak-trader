@@ -1,4 +1,6 @@
-﻿Imports System
+Imports System.Resources
+
+Imports System
 Imports System.Reflection
 Imports System.Runtime.InteropServices
 
@@ -15,7 +17,7 @@ Imports System.Runtime.InteropServices
 <Assembly: AssemblyCopyright("© 2022 Howutrade Software Solutions LLP")> 
 <Assembly: AssemblyTrademark("Howutrade")> 
 
-<Assembly: ComVisible(False)>
+<Assembly: ComVisible(False)> 
 
 'The following GUID is for the ID of the typelib if this project is exposed to COM
 <Assembly: Guid("9D774ED0-9D53-4D89-A1D6-DE84DA3F9594")> 
@@ -31,5 +33,7 @@ Imports System.Runtime.InteropServices
 ' by using the '*' as shown below:
 ' <Assembly: AssemblyVersion("1.0.*")> 
 
-<Assembly: AssemblyVersion("1.0.0.0")> 
-<Assembly: AssemblyFileVersion("1.0.0.0")> 
+<Assembly: AssemblyVersion("1.0.22.0")>
+<Assembly: AssemblyInformationalVersion("1.0.22.0")>
+<Assembly: AssemblyFileVersion("1.0.22.1606")>
+<Assembly: NeutralResourcesLanguageAttribute("en")> 
